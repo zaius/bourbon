@@ -1,15 +1,31 @@
 class BourbonNotInstalled < StandardError
 end
 
+class PluginNotInstalled < StandardError
+end
+
 class InstallationManager
   def initialize(args)
     @logger = args[:logger]
     @plugin_name = args[:plugin_name]
+    @top_level_plugin_dir = args[:top_level_plugin_dir]
+  end
+
+  def ensure_bourbon_installed
+    @logger.debug('ensuring Bourbon is installed')
+    unless File.directory?('bourbon')
+      @logger.fatal("Bourbon is not installed in #{Dir.pwd}")
+      raise BourbonNotInstalled
+    end
   end
 
   def ensure_plugin_directory
     @logger.debug('ensuring the plugin has a directory')
-    FileUtils.mkdir_p(plugin_dir)
+    if File.exist?(top_level_plugin_dir)
+      FileUtils.mkdir_p(plugin_dir)
+    else
+      raise PluginNotInstalled
+    end
   end
 
   def ensure_extensions_installed
@@ -63,9 +79,7 @@ class InstallationManager
     end
   end
 
-  def top_level_plugin_dir
-    File.dirname(File.dirname(File.dirname(File.dirname(__FILE__))))
-  end
+  attr_reader :top_level_plugin_dir
 
   def top_level_plugin_lib
     File.join(top_level_plugin_dir, plugin_lib)
@@ -80,7 +94,7 @@ class InstallationManager
   end
 
   def plugin_lib
-    File.join(plugin_dir, 'lib', "#{@plugin_name}.rb")
+    File.join('lib', "#{@plugin_name}.rb")
   end
 
   def sass_extensions_lib
@@ -92,7 +106,7 @@ class InstallationManager
   end
 
   def plugin_implementation_dir
-    File.join(plugin_dir, 'lib', @plugin_name)
+    File.join('lib', @plugin_name)
   end
 
   def all_stylesheets
