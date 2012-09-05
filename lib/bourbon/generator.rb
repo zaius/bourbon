@@ -1,14 +1,17 @@
 require "fileutils"
+require 'bourbon/installation_manager'
+require 'logger'
 
 module Bourbon
   class Generator
-    def initialize(arguments)
+    def initialize(arguments, debug)
       @subcommand = arguments.first
+      @logger = build_logger(debug)
     end
 
     def run
       if @subcommand == "install"
-       install
+        install
       elsif @subcommand == "update"
         update
       end
@@ -16,20 +19,19 @@ module Bourbon
 
     def update
       if bourbon_files_already_exist?
-        remove_bourbon_directory
-        install_files
-        puts "Bourbon files updated."
+        update_files
+        @logger.info "Bourbon files updated."
       else
-        puts "No existing bourbon installation. Doing nothing."
+        @logger.info "No existing bourbon installation. Doing nothing."
       end
     end
 
     def install
       if bourbon_files_already_exist?
-        puts "Bourbon files already installed, doing nothing."
+        @logger.info "Bourbon files already installed, doing nothing."
       else
         install_files
-        puts "Bourbon files installed to bourbon/"
+        @logger.info "Bourbon files installed to bourbon/"
       end
     end
 
@@ -40,47 +42,25 @@ module Bourbon
     end
 
     def install_files
-      make_lib_directory
-      copy_in_sass_extensions
-      copy_in_scss_files
+      installation_manager.ensure_plugin_directory
+      installation_manager.ensure_extensions_installed
+      installation_manager.ensure_stylesheets_installed
     end
 
-    def remove_bourbon_directory
-      FileUtils.rm_rf("bourbon")
+    def update_files
+      installation_manager.remove_plugin
+      install_files
     end
 
-    def make_lib_directory
-      FileUtils.mkdir_p("bourbon/lib/bourbon")
+    def installation_manager
+      InstallationManager.new(logger: @logger, plugin_name: 'bourbon')
     end
 
-    def copy_in_sass_extensions
-      FileUtils.cp(File.join(lib_directory, "bourbon.rb"), "bourbon/lib/")
-      FileUtils.cp(File.join(lib_bourbon_directory, "sass_extensions.rb"), "bourbon/lib/bourbon/")
-      FileUtils.cp_r(File.join(lib_bourbon_directory, "sass_extensions"), "bourbon/lib/bourbon/")
-    end
-
-    def copy_in_scss_files
-      FileUtils.cp_r(all_stylesheets, "bourbon/")
-    end
-
-    def all_stylesheets
-      Dir["#{stylesheets_directory}/*"]
-    end
-
-    def stylesheets_directory
-      File.join(top_level_directory, "app", "assets", "stylesheets")
-    end
-
-    def lib_directory
-      File.join(top_level_directory, "lib")
-    end
-
-    def lib_bourbon_directory
-      File.join(top_level_directory, "lib", "bourbon")
-    end
-
-    def top_level_directory
-      File.dirname(File.dirname(File.dirname(__FILE__)))
+    def build_logger(debug)
+      logger = Logger.new($stdout)
+      logger.progname = 'bourbon'
+      logger.level = debug ? Logger::DEBUG : Logger::INFO
+      logger
     end
   end
 end
