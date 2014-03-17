@@ -4,15 +4,36 @@
 //************************************************************************//
 
 @mixin background-image($images...) {
-  background-image: _add-prefix($images, webkit);
-  background-image: _add-prefix($images);
+  $images_new: ();
+  @each $image in $images {
+    @if (type-of($image) == string) {
+      $slice: str_slice($image, 0, 3);
+      @if $slice != "url" {
+        $start: str_index($image,"(") + 1;
+        $end: str_index($image,")") - 1;
+        $gradient_str: str_slice($image, $start, $end);
+        @debug "string" $gradient_str;
+        $image: _linear-gradient($gradient_str);
+        @debug $image;
+      }
+    }
+    $images_new: append($images_new, $image);
+  }
+  // @debug length($images_new);
+  // @debug $images_new;
+
+  // background-image: _add-prefix($images, webkit);
+  background-image: _add-prefix($images_new);
 }
 
 @function _add-prefix($images, $vendor: false) {
   $images-prefixed: ();
   $gradient-positions: false;
+  // @debug length($images);
   @for $i from 1 through length($images) {
     $type: type-of(nth($images, $i)); // Get type of variable - List or String
+    // @debug nth($images, $i); // Get type of variable - List or String
+    // @debug $type;
 
     // If variable is a list - Gradient
     @if $type == list {
@@ -21,12 +42,16 @@
       $gradient-args: null;
 
       @if ($gradient-type == linear) or ($gradient-type == radial) {
+        // @debug $gradient-type;
         $gradient-pos:  nth(nth($images, $i), 2); // Get gradient position
         $gradient-args: nth(nth($images, $i), 3); // Get actual gradient (red, blue)
+        // @debug "Pos: " $gradient-pos;
+        // @debug "Args: " $gradient-args;
       }
       @else {
         $gradient-args: nth(nth($images, $i), 2); // Get actual gradient (red, blue)
       }
+      // @debug "Args: " $gradient-pos;
 
       $gradient-positions: _gradient-positions-parser($gradient-type, $gradient-pos);
       $gradient: _render-gradients($gradient-positions, $gradient-args, $gradient-type, $vendor);
@@ -46,3 +71,4 @@
   //@include background-image(url("/images/a.png"), linear-gradient(orange, red));
   //@include background-image(url("image.png"), linear-gradient(orange, red), url("image.png"));
   //@include background-image(linear-gradient(hsla(0, 100%, 100%, 0.25) 0%, hsla(0, 100%, 100%, 0.08) 50%, transparent 50%), linear-gradient(orange, red));
+

@@ -1,6 +1,42 @@
-@function linear-gradient($pos, $gradients...) {
+@function _linear-gradient($pos, $gradients...) {
+  @debug "POS: "$pos;
+  $indexes: ();
+  $pos-list: ();
+
+  // Find all indexes of commas
+  @for $i from 1 through str_length($pos) {
+    $char: str_slice($pos, $i, $i);
+    @if $char == "," {
+      $indexes: append($indexes, $i); // Create list of index locations
+    }
+  }
+
+  $count: length($indexes) + 1; // 1 extra time to get last arg
+  @for $i from 1 through $count {
+    $extracted-pos: null;
+    @if $i > 1 {
+      $start-at: nth($indexes, $i - 1) + 1; // Get previous index
+      $end-at: str_length($pos);
+
+      @if ($i != $count) {
+        $end-at: nth($indexes, $i) - 1; // Get current Index
+      }
+
+      $extracted-pos: str_slice($pos, $start-at, $end-at);
+
+    } @else {
+      $extracted-pos: str_slice($pos, 0 , nth($indexes, $i) - 1);
+    }
+
+    $pos-list: append($pos-list, $extracted-pos, comma);
+  }
+
+  @debug "POS-list" $pos-list;
+  $pos: $pos-list;
   $type: linear;
   $pos-type: type-of(nth($pos, 1));
+  @debug nth($pos,1);
+  @debug $pos-type;
 
   // if $pos doesn't exist, fix $gradient
   @if ($pos-type == color) or (nth($pos, 1) == "transparent")  {
