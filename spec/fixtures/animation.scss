@@ -1,0 +1,21 @@
+@import "setup";
+
+.animation-shorthand {
+  @include animation(scale 1.0s ease-in, slide 2.5s ease);
+}
+
+.animation-name {
+  @include animation-name(scale, slide);
+}
+
+.animation-duration {
+  @include animation-duration(2s);
+}
+
+.animation-timing-function {
+  @include animation-timing-function(ease);
+}
+
+.animation-iteration-count {
+  @include animation-iteration-count(infinite);
+}
