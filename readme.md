@@ -1,4 +1,9 @@
-# libsass compatible bourbon
+# edit 2014-06-04
+
+Don't use this. It's just here to support existing installations.
+The official bourbon 3.2 branch now supports libsass.
+
+## libsass compatible bourbon
 
 The latest release bourbon (4.0.0) relies on features of sass v3.3. See:
   * https://github.com/thoughtbot/bourbon/issues/375
